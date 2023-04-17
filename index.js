@@ -16,6 +16,7 @@ function getAllDepartments() {
         if (err) console.log(err)
         else {
             console.table(results);
+            mainMenu();
         }
     })
 }
@@ -26,6 +27,7 @@ function getAllRoles() {
         if (err) console.log(err)
         else {
             console.table(results);
+            mainMenu();
         }
     })
 }
@@ -36,12 +38,28 @@ function getAllEmployees() {
         if (err) console.log(err)
         else {
             console.table(results);
+            mainMenu();
         }
     })
 }
 
 function addDepartment() {
-
+    inquirer.prompt([
+        {
+            name: 'depName',
+            message: 'What is the name of the department?',
+            type: 'input'
+        }
+    ])
+    .then(answer => {
+        db.query(`INSERT INTO department (name) VALUES (?)`, answer.depName, (err, results) => {
+            if (err) console.log(err)
+            else {
+                console.log(`Added department ${answer.depName} to the database`);
+                mainMenu();
+            }
+        })
+    })
 }
 
 function addRole() {
@@ -75,6 +93,9 @@ function mainMenu() {
                 break;
             case "View All Employees":
                 getAllEmployees();
+                break;
+            case "Add a Department":
+                addDepartment();
                 break;
         }
     })
