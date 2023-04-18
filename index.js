@@ -73,7 +73,6 @@ async function addRole() {
     //retrieves all of the departments and puts them in the deps variable
     const deps = await query(`SELECT * FROM department`)
     //takes just the list of department names and puts them into the depsArr variable
-    let depsArr = deps.map(obj => obj.name);
     inquirer.prompt([
         {
             name: 'title',
@@ -92,7 +91,7 @@ async function addRole() {
             message: 'What department is this role in?',
             type: 'list',
             //set the choices equal to only the department names
-            choices: depsArr
+            choices: deps.map(obj => obj.name)
         }
     ])
 
@@ -111,13 +110,70 @@ async function addRole() {
             }
         })
     })
-
-
-
 }
 
-function addEmployee() {
+async function addEmployee() {
+    //get all of the roles from the role table
+    const roles = await query(`SELECT * FROM role`);
+    const employees = await query(`SELECT * FROM employee`);
+    //added another object to the list of employees that gives an option for not having a manager
+    employees.push({
+        first_name: "No",
+        last_name: "Manager",
+        id: null
+    })
 
+    inquirer.prompt([
+        {
+            name: 'firstName',
+            message: "What is the employee's first name?",
+            type: 'input'
+        },
+
+        {
+            name: 'lastName',
+            message: "What is the employee's last name?",
+            type: 'input'
+        },
+
+        {
+            name: 'role',
+            message: 'What role is the employee in?',
+            type: 'list',
+            choices: roles.map(obj => obj.title)
+        },
+
+        {
+            name: 'manager',
+            message: "Who is the employee's manager?",
+            type: 'list',
+            choices: employees.map(obj => `${obj.first_name} ${obj.last_name}`)
+        }
+    ])
+
+    .then(answer => {
+        //get the role object of the role the user selected for the employee
+        let roleId = roles.filter(obj => {
+            return obj.title == answer.role;
+        })
+
+        //get the manager object of the manager the user selected for the employee
+        let managerId = employees.filter(obj => {
+            if(answer.manager) return `${obj.first_name} ${obj.last_name}` == answer.manager;
+            else {
+                
+            }
+        })
+
+        //add the employee to the database
+        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`, [answer.firstName, answer.lastName, roleId[0].id, managerId[0].id], (err, results) => {
+            if(err) console.log(err)
+            else {
+                console.log(`Added employee ${answer.firstName} ${answer.lastName} to database.`);
+                mainMenu();
+            }
+        })
+    })
 }
 
 function updateEmployee() {
@@ -149,6 +205,9 @@ function mainMenu() {
                 break;
             case "Add a Role":
                 addRole();
+                break;
+            case "Add an Employee":
+                addEmployee();
                 break;
         }
     })
