@@ -27,7 +27,7 @@ function getAllDepartments() {
 
 //returns all of the roles from the role table
 function getAllRoles() {
-    db.query(`SELECT * FROM role`, (err, results) => {
+    db.query(`SELECT role.id, role.title, department.name AS department, role.salary FROM role JOIN department ON role.department_id = department.id`, (err, results) => {
         if (err) console.log(err)
         else {
             console.table(results);
