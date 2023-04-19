@@ -38,7 +38,8 @@ function getAllRoles() {
 
 //returns all of the employees from the employee table with their respective title, salary, department, and manager
 function getAllEmployees() {
-    db.query(`SELECT e1.id, e1.first_name, e1.last_name, role.title, role.salary, department.name AS department, CONCAT(e2.first_name, ' ', e2.last_name) AS manager 
+    db.query(`
+    SELECT e1.id, e1.first_name, e1.last_name, role.title, role.salary, department.name AS department, CONCAT(e2.first_name, ' ', e2.last_name) AS manager 
     FROM employee e1 
     JOIN role ON e1.role_id = role.id 
     JOIN department 
@@ -183,14 +184,43 @@ async function addEmployee() {
 }
 
 async function updateEmployeeRole() {
+    //get roles and employees from the database
     const roles = await query(`SELECT * FROM role`);
     const employees = await query(`SELECT * FROM employee`);
     inquirer.prompt([
         {
             name: 'employee',
-            message: 'Which employee would you like to change the role of?'
+            message: 'Which employee would you like to change the role of?',
+            type: 'list',
+            //set the choices equal to employee names
+            choices: employees.map(obj => `${obj.first_name} ${obj.last_name}`)
+        },
+
+        {
+            name: 'role',
+            message: "What would you like to change the employee's role to?",
+            type: 'list',
+            //set the choices equal to the role titles
+            choices: roles.map(obj => obj.title)
         }
     ])
+
+    .then(answer => {
+        //retrieve the JSONs of the selected employee and role from the database
+        let roleId = roles.filter(obj => obj.title == answer.role);
+        let empId = employees.filter(obj => `${obj.first_name} ${obj.last_name}` == answer.employee);
+        //update the chosen employee to the chosen role
+        db.query(`
+        UPDATE employee
+        SET role_id = ?
+        WHERE id = ?`, [roleId[0].id, empId[0].id], (err, results) => {
+            if(err) console.log(err)
+            else {
+                console.log(`Updated role of ${answer.employee} to ${answer.role}`);
+                mainMenu();
+            }
+        });
+    })
 }
 
 function mainMenu() {
@@ -221,6 +251,9 @@ function mainMenu() {
                 break;
             case "Add an Employee":
                 addEmployee();
+                break;
+            case "Update Employee Role":
+                updateEmployeeRole();
                 break;
         }
     })
