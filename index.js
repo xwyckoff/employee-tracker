@@ -36,9 +36,15 @@ function getAllRoles() {
     })
 }
 
-//returns all of the employees from the employee table
+//returns all of the employees from the employee table with their respective title, salary, department, and manager
 function getAllEmployees() {
-    db.query(`SELECT * FROM employee`, (err, results) => {
+    db.query(`SELECT e1.id, e1.first_name, e1.last_name, role.title, role.salary, department.name AS department, CONCAT(e2.first_name, ' ', e2.last_name) AS manager 
+    FROM employee e1 
+    JOIN role ON e1.role_id = role.id 
+    JOIN department 
+    ON role.department_id = department.id 
+    LEFT JOIN employee e2 
+    ON e1.manager_id = e2.id`, (err, results) => {
         if (err) console.log(err)
         else {
             console.table(results);
@@ -176,8 +182,15 @@ async function addEmployee() {
     })
 }
 
-function updateEmployee() {
-
+async function updateEmployeeRole() {
+    const roles = await query(`SELECT * FROM role`);
+    const employees = await query(`SELECT * FROM employee`);
+    inquirer.prompt([
+        {
+            name: 'employee',
+            message: 'Which employee would you like to change the role of?'
+        }
+    ])
 }
 
 function mainMenu() {
